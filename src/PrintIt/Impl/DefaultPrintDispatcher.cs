@@ -38,9 +38,11 @@
 
         public void CancelAll()
         {
-            _currentTaskTokenSource?.Cancel();
-            while (_documentQueue.TryTake(out var document)) 
+            while (_documentQueue.TryTake(out var document))
+            {
+                _currentTaskTokenSource?.Cancel();
                 _faulted.Add(document);
+            }
         }
 
         public async Task StartDispatching(CancellationToken cancellationToken)
@@ -58,8 +60,7 @@
                     var newTaskTokenSource = new CancellationTokenSource();
                     Interlocked.Exchange(ref _currentTaskTokenSource, newTaskTokenSource);
 
-                    await _printer
-                                .Print(
+                    await _printer.Print(
                                     document: document,
                                     onFailure: () =>
                                     {
