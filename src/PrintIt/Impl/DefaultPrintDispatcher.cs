@@ -61,15 +61,19 @@
                     var newTaskTokenSource = new CancellationTokenSource();
                     Interlocked.Exchange(ref _currentTaskTokenSource, newTaskTokenSource);
 
-                    if (await _printer.TryPrint(document, _currentTaskTokenSource.Token).ConfigureAwait(true))
-                    {
-                        _printed.Add(document);
-                        AveragePrintTime = _printed.Average(d => d.TimeToPrint.TotalSeconds);
-                    }
-                    else
-                    {
-                        _faulted.Add(document);
-                    }
+                    await _printer
+                                .Print(
+                                    document: document,
+                                    onFailure: () =>
+                                    {
+                                        _faulted.Add(document);
+                                    },
+                                    onSuccess: () =>
+                                    {
+                                        _printed.Add(document);
+                                        AveragePrintTime = _printed.Average(d => d.TimeToPrint.TotalSeconds);
+                                    },
+                                    cancellationToken: _currentTaskTokenSource.Token);
                 }
 
                 catch (TaskCanceledException taskCanc)
