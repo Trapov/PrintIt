@@ -38,12 +38,9 @@
 
         public void CancelAll()
         {
-            lock (_documentQueue)
-            {
-                _currentTaskTokenSource?.Cancel();
-                while (_documentQueue.TryTake(out var document)) 
-                    _faulted.Add(document);
-            }
+            _currentTaskTokenSource?.Cancel();
+            while (_documentQueue.TryTake(out var document)) 
+                _faulted.Add(document);
         }
 
         public async Task StartDispatching(CancellationToken cancellationToken)
