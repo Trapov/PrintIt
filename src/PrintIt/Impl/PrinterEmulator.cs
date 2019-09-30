@@ -15,11 +15,15 @@
             }
 
             await Task.Delay(document.TimeToPrint, cancellationToken).ConfigureAwait(false);
-            Console.WriteLine(
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Out.Write("Done -> ");
+            Console.ResetColor();
+            Console.Out.WriteLine(
                 $"Document [{document.DocumentType}] " +
                 $"with page size [{document.PageSize}] " +
                 $"was printed for [{document.TimeToPrint}]"
             );
+
             onSuccess();
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace PrintIt.Application
 {
     public static class Program
     {
-        public static void Main()
+        public static async Task Main()
         {
             var printer = new PrinterEmulator();
             using var dispatcher = new DefaultPrintDispatcher(printer);
@@ -27,50 +28,60 @@ namespace PrintIt.Application
 
             var key = new ConsoleKeyInfo();
 
-            Console.WriteLine("M -> Metrics");
-
-            Console.WriteLine("A -> Add #1 Document");
-            Console.WriteLine("S -> Add #2 Document");
-
-            Console.WriteLine("C -> Cancel current print");
-            Console.WriteLine("V -> Cancel all");
-
-            Console.WriteLine("Escape -> to exit");
+            Console.Out.WriteLine("----------------------------------");
+            Console.Out.WriteLine("M -> Metrics");
+            Console.Out.WriteLine("A -> Add #1 Document");
+            Console.Out.WriteLine("S -> Add #2 Document");
+            Console.Out.WriteLine("C -> Cancel current print");
+            Console.Out.WriteLine("V -> Cancel all");
+            Console.Out.WriteLine("Escape -> to exit");
+            Console.Out.WriteLine("----------------------------------");
 
             var source = new CancellationTokenSource();
-
             var dispatchingTask = dispatcher.StartDispatching(source.Token);
 
-            while (key.Key != ConsoleKey.Escape)
+            try
             {
-                key = Console.ReadKey(true);
-
-                if (key.Key == ConsoleKey.A)
-                    dispatcher.QueuePrintFor(documentOne);
-                if (key.Key == ConsoleKey.S)
-                    dispatcher.QueuePrintFor(documentSecond);
-
-                if (key.Key == ConsoleKey.M)
+                while (key.Key != ConsoleKey.Escape)
                 {
-                    var avgTime = dispatcher.AveragePrintTime;
+                    key = Console.ReadKey(true);
 
-                    Console.WriteLine($"AvgTime: [{avgTime}]");
+                    if (key.Key == ConsoleKey.A)
+                        dispatcher.QueuePrintFor(documentOne);
+                    if (key.Key == ConsoleKey.S)
+                        dispatcher.QueuePrintFor(documentSecond);
 
-                    Console.WriteLine($"Dispatching Task: [{dispatchingTask.Status}]");
+                    if (key.Key == ConsoleKey.M)
+                    {
+                        var avgTime = dispatcher.AveragePrintTime;
+                        var stringBuilder = new StringBuilder();
+                        stringBuilder.AppendLine("----------------------------------");
 
-                    Console.WriteLine($"Printed: [{dispatcher.Printed.Count()}]");
-                    Console.WriteLine($"Faulted: [{dispatcher.Faulted.Count()}]");
-                    Console.WriteLine($"Awaiting: [{dispatcher.Awaiting.Count()}]");
+                        stringBuilder.AppendLine($"AvgTime: [{avgTime}]");
+                        stringBuilder.AppendLine($"Dispatching Task: [{dispatchingTask.Status}]");
+                        stringBuilder.AppendLine($"Printed: [{dispatcher.Printed.Count()}]");
+                        stringBuilder.AppendLine($"Faulted: [{dispatcher.Faulted.Count()}]");
+                        stringBuilder.AppendLine($"Awaiting: [{dispatcher.Awaiting.Count()}]");
+                        stringBuilder.AppendLine("----------------------------------");
+
+                        Console.Out.WriteLine(stringBuilder);
+                    }
+
+                    if (key.Key == ConsoleKey.C)
+                        dispatcher.CancelCurrentPrint();
+
+                    if (key.Key == ConsoleKey.V)
+                        dispatcher.CancelAll();
                 }
 
-                if (key.Key == ConsoleKey.C)
-                    dispatcher.CancelCurrentPrint();
-
-                if (key.Key == ConsoleKey.V)
-                    dispatcher.CancelAll();
+                Console.Out.WriteLine("Trying to exit gracefully...");
+                source.Cancel();
+                await dispatchingTask;
+            } 
+            catch (TaskCanceledException taskException)
+            {
+                Console.Out.WriteLine("... and done!");
             }
-            
-            source.Cancel();
         }
     }
 }

@@ -16,7 +16,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5CFD1E97-FE85-412A-94BD-F579CE55FCB6}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		example.jpg = example.jpg
+		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncBox", "src\AsyncBox\AsyncBox\AsyncBox.csproj", "{75663AB1-6F08-4708-BCA4-766135F8DF66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,6 +68,18 @@ Global
 		{EF88A11C-0C1D-4F19-8080-A45B06216C56}.Release|x64.Build.0 = Release|Any CPU
 		{EF88A11C-0C1D-4F19-8080-A45B06216C56}.Release|x86.ActiveCfg = Release|Any CPU
 		{EF88A11C-0C1D-4F19-8080-A45B06216C56}.Release|x86.Build.0 = Release|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Debug|x64.Build.0 = Debug|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Debug|x86.Build.0 = Debug|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Release|x64.ActiveCfg = Release|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Release|x64.Build.0 = Release|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Release|x86.ActiveCfg = Release|Any CPU
+		{75663AB1-6F08-4708-BCA4-766135F8DF66}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +88,7 @@ Global
 		{10E6CC00-8F60-4415-B4D6-616D5BE8FE35} = {CBE700D8-2772-412F-A84A-E04187E7C28C}
 		{540461E1-953D-404B-A306-D50E7DE474B8} = {CBE700D8-2772-412F-A84A-E04187E7C28C}
 		{EF88A11C-0C1D-4F19-8080-A45B06216C56} = {744B3AD8-3DD1-4C44-8946-1F8F03F70F4F}
+		{75663AB1-6F08-4708-BCA4-766135F8DF66} = {CBE700D8-2772-412F-A84A-E04187E7C28C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D365A006-08D3-4458-96E6-8851190BF5E8}

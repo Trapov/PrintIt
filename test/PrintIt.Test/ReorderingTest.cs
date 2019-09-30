@@ -55,7 +55,7 @@ namespace PrintIt.Test
         }
 
     [Theory(DisplayName = "It should work")]
-    [Repeat(4500)]
+    [Repeat(250)]
     public void CorrectMutationTest(int itNumber)
         {
             var mockPrint = new MockPrinter();

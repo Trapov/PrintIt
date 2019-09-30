@@ -9,88 +9,92 @@
 
     public sealed class DefaultPrintDispatcher : IPrintDispatcher, IDisposable
     {
-        public double AveragePrintTime { get; private set; } = 0;
-        public IEnumerable<Document> Awaiting => _documentQueue;
-        public IEnumerable<Document> Printed => _printed;
-        public IEnumerable<Document> Faulted => _faulted;
+        public double AveragePrintTime => Printed.DefaultIfEmpty().Average(d => d != null ? d.TimeToPrint.TotalSeconds : 0);
+        public IEnumerable<Document> Awaiting => _printingTaskQueue.Select(pt => pt.Document);
+        public IEnumerable<Document> Printed => _doneDocuments.Where(pt => pt.DocumentStatus == DocumentStatuses.Printed).Select(pt => pt.Document);
+        public IEnumerable<Document> Faulted => _doneDocuments.Where(pt => pt.DocumentStatus == DocumentStatuses.Faulted).Select(pt => pt.Document);
 
+        private const string ThreadTaskMetricsFormat = "ThreadId[{0}], TaskId[{1}] -> \n {2}";
+        
+        private readonly ConcurrentQueue<PrintingTask> _printingTaskQueue;
+        private readonly ConcurrentBag<PrintingTask> _doneDocuments;
         private readonly IPrinter _printer;
-        private readonly IList<Document> _printed;
-        private readonly IList<Document> _faulted;
 
         private CancellationTokenSource _currentTaskTokenSource;
-        
-        private BlockingCollection<Document> _documentQueue;
 
         public DefaultPrintDispatcher(IPrinter printer)
         {
             _printer = printer;
+            _printingTaskQueue = new ConcurrentQueue<PrintingTask>();
+            _doneDocuments = new ConcurrentBag<PrintingTask>();
 
-            _documentQueue = new BlockingCollection<Document>();
-            _printed = new List<Document>();
-            _faulted = new List<Document>();
-        }
-
-        public void QueuePrintFor(Document document)
-        {
-            while (!_documentQueue.TryAdd(document)){}
-        }
-
-        public void CancelAll()
-        {
-            while (_documentQueue.TryTake(out var document))
-            {
-                _currentTaskTokenSource?.Cancel();
-                _faulted.Add(document);
-            }
+            _currentTaskTokenSource = new CancellationTokenSource();
         }
 
         public async Task StartDispatching(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                Document document;
+                PrintingTask taskToPrint;
                 do
                 {
-                    await Task.Delay(100, cancellationToken);
-                } while (!_documentQueue.TryTake(out document, 100, cancellationToken));
+                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                } while (!_printingTaskQueue.TryDequeue(out taskToPrint));
 
                 try
                 {
-                    var newTaskTokenSource = new CancellationTokenSource();
-                    Interlocked.Exchange(ref _currentTaskTokenSource, newTaskTokenSource);
+                    if (_currentTaskTokenSource.IsCancellationRequested)
+                    {
+                        var newTaskTokenSource = new CancellationTokenSource();
+                        Interlocked.Exchange(ref _currentTaskTokenSource, newTaskTokenSource);
+                    }
 
                     await _printer.Print(
-                                    document: document,
-                                    onFailure: () =>
-                                    {
-                                        _faulted.Add(document);
-                                    },
-                                    onSuccess: () =>
-                                    {
-                                        _printed.Add(document);
-                                        AveragePrintTime = _printed.Average(d => d.TimeToPrint.TotalSeconds);
-                                    },
-                                    cancellationToken: _currentTaskTokenSource.Token);
+                        document: taskToPrint.Document,
+                        onSuccess: () => 
+                        {
+                            taskToPrint.ToPrinted();
+                            _doneDocuments.Add(taskToPrint);
+                        },
+                        onFailure: () =>
+                        {
+                            taskToPrint.ToPrinted();
+                            _doneDocuments.Add(taskToPrint);
+                        },
+                        cancellationToken: _currentTaskTokenSource.Token
+                    ).ConfigureAwait(false);
                 }
 
                 catch (TaskCanceledException taskCanc)
                 {
-                    Console.WriteLine("Task was cancelled");
-                    _faulted.Add(document);
+                    taskToPrint.ToFaulted();
+
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Error.Write("Failed -> ");
+                    Console.ResetColor();
+
+                    Console.Error.WriteLine(ThreadTaskMetricsFormat, Thread.CurrentThread.ManagedThreadId, Task.CurrentId, taskCanc.Message);
                 }
             }
         }
+        
+        public void QueuePrintFor(Document document) => _printingTaskQueue.Enqueue(new PrintingTask(document));
 
-        public void CancelCurrentPrint()
+        public void CancelCurrentPrint() => _currentTaskTokenSource?.Cancel();
+        public void CancelAll()
         {
-            _currentTaskTokenSource?.Cancel();
+            while (_printingTaskQueue.TryDequeue(out var printingTask))
+            {
+                _currentTaskTokenSource?.Cancel();
+                printingTask.ToFaulted();
+                _doneDocuments.Add(printingTask);
+            }
         }
 
         public void Dispose()
         {
             _currentTaskTokenSource?.Dispose();
-            _documentQueue?.Dispose();
+            _printingTaskQueue?.Clear();
         }
     }
 }
