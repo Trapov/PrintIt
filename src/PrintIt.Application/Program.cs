@@ -78,10 +78,11 @@ namespace PrintIt.Application
                 source.Cancel();
                 await dispatchingTask;
             } 
-            catch (TaskCanceledException taskException)
+            catch (TaskCanceledException)
             {
-                Console.Out.WriteLine("... and done!");
+                Console.Error.WriteLine("   ..some tasks were cancelled..");
             }
+            Console.Out.WriteLine("... and done!");
         }
     }
 }

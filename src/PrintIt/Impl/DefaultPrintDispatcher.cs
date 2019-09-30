@@ -38,11 +38,13 @@
                 PrintingTask taskToPrint;
                 do
                 {
-                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                 } while (!_printingTaskQueue.TryDequeue(out taskToPrint));
 
                 try
                 {
+                    _doneDocuments.Add(taskToPrint);
+
                     if (_currentTaskTokenSource.IsCancellationRequested)
                     {
                         var newTaskTokenSource = new CancellationTokenSource();
@@ -54,12 +56,10 @@
                         onSuccess: () => 
                         {
                             taskToPrint.ToPrinted();
-                            _doneDocuments.Add(taskToPrint);
                         },
                         onFailure: () =>
                         {
-                            taskToPrint.ToPrinted();
-                            _doneDocuments.Add(taskToPrint);
+                            taskToPrint.ToFaulted();
                         },
                         cancellationToken: _currentTaskTokenSource.Token
                     ).ConfigureAwait(false);
@@ -69,8 +69,8 @@
                 {
                     taskToPrint.ToFaulted();
 
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Error.Write("Failed -> ");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Error.Write("Cancelled -> ");
                     Console.ResetColor();
 
                     Console.Error.WriteLine(ThreadTaskMetricsFormat, Thread.CurrentThread.ManagedThreadId, Task.CurrentId, taskCanc.Message);
