@@ -1,4 +1,4 @@
 # PrintIt
 
 
-![example](example.jpg)
+![example](example.png)
